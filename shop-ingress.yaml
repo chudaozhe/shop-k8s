@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: shop-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  tls:
+    - hosts:
+        - shop.yuanxi.ltd
+      secretName: shop-ingress-secret
+  rules:
+    - host: "shop.yuanxi.ltd"
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: shop-nginx
+                port:
+                  number: 80

@@ -1,0 +1,13 @@
+# 定义PV
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: log-pv
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 2Gi    
+  nfs:
+    path: /nfs/data/log
+    server: 192.168.10.99

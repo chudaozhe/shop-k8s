@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  default.conf: |
+    server {
+        listen       80;
+        server_name  localhost;
+        index index.php index.htm index.html default.html;
+        root   /var/www/shop-h5/web;
+
+        client_max_body_size 80m;
+
+        access_log  /var/log/nginx/host_access.log;
+        error_log  /var/log/nginx/host_error.log debug;
+
+        gzip  on;
+        gzip_min_length 1000;
+        gzip_http_version 1.1;
+        gzip_vary on;
+        gzip_comp_level 6;
+        gzip_proxied any;
+        gzip_types text/plain application/javascript application/x-javascript text/css application/xml text/javascript application/x-httpd-php image/jpeg image/gif image/png application/vnd.ms-fontobject font/ttf font/opentype font/x-woff image/svg+xml;
+        gzip_buffers 16 8k;
+        gzip_disable <93>MSIE [1-6].(?!.*SV1)<94>;
+
+        location /api {
+            proxy_pass   http://shop-nginx:8089/;
+            proxy_redirect          off;
+            proxy_set_header        Host $host;
+            proxy_set_header        X-Real-IP $remote_addr;
+            proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+            client_max_body_size    500m;
+            client_body_buffer_size 128k;
+            proxy_connect_timeout   300;
+            proxy_send_timeout      300;
+            proxy_read_timeout      300;
+            proxy_buffer_size       4k;
+            proxy_buffers           4 32k;
+            proxy_busy_buffers_size 64k;
+            proxy_temp_file_write_size 64k;
+        }
+
+        location /dist/ {
+            alias  /var/www/shop-admin/web/;
+            break;
+        }
+        location /data/ {
+            alias  /var/www/shop/web/data/;
+            break;
+        }
+
+    	error_page  404   /var/www/html/404.html;
+    	error_page   500 502 503 504  /50x.html;
+    }
+    server {
+        listen 8089;
+    	index default.html index.htm index.html index.php;
+    	root /var/www/shop/web;
+
+    	rewrite ^/admin/(.*)$ /admin.php/admin/$1 last;
+    	rewrite ^/user/(.*)$ /user.php/user/$1 last;
+
+        location / {
+            if (!-e $request_filename) {
+                rewrite ^(.*)$ /index.php/$1 last;
+                break;
+            }
+        }
+
+    	location ~ \.php {
+    		fastcgi_pass   shop-php:9000;
+            fastcgi_split_path_info ^((?U).+.php)(/?.+)$;
+            fastcgi_param PATH_INFO $fastcgi_path_info;
+    		fastcgi_param ENV_MODE production;
+    		fastcgi_index  index.php;
+            fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+            include        fastcgi_params;
+    	}
+
+    	error_page  404   /var/www/html/404.html;
+    	error_page   500 502 503 504  /50x.html;
+    }

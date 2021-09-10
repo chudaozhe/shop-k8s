@@ -1,0 +1,11 @@
+# 定义PVC，用于消费PV
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: log-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 2Gi
